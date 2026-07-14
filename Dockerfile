@@ -23,9 +23,6 @@ RUN apt-get update \
         zip \
     && pecl install ssh2-1.4 \
     && docker-php-ext-enable ssh2 \
-    && a2dismod mpm_prefork mpm_worker mpm_event 2>/dev/null || true \
-    && a2enmod mpm_prefork \
-    && a2enmod rewrite headers \
     && rm -rf /var/lib/apt/lists/* /tmp/pear
 
 WORKDIR /var/www/html
