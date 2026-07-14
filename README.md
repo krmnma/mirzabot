@@ -280,3 +280,59 @@ Thanks to everyone who has contributed to making Mirza Bot better:
 💬 [Channel](https://t.me/mirzapanel) · 👥 [Group](https://t.me/mirzapanelgroup) · ⭐ [Star on GitHub](https://github.com/mahdiMGF2/mirzabot)
 
 </div>
+
+---
+
+## 🚂 Deploy on Railway with Docker
+
+This repository includes a `Dockerfile` and `railway.json`, so Railway can build and run Mirza Bot directly with Docker.
+
+### Railway steps
+
+1. Create a new Railway project and deploy this GitHub repository.
+2. Add a Railway MySQL database to the same project.
+3. Set the required environment variables on the Mirza Bot service:
+
+| Variable | Required | Description |
+|----------|----------|-------------|
+| `API_KEY` or `BOT_TOKEN` | ✅ | Telegram bot token from BotFather. |
+| `ADMIN_NUMBER` or `ADMIN_CHAT_ID` | ✅ | Telegram numeric chat ID of the main admin. |
+| `USERNAME_BOT` or `BOT_USERNAME` | ✅ | Telegram bot username without `@`. |
+| `DOMAIN_HOSTS` or `DOMAIN_NAME` | Optional | Public domain used for webhook URLs. If omitted, `RAILWAY_PUBLIC_DOMAIN` is used. Use the public hostname only, for example `your-app.up.railway.app` (do not add `:8080`). |
+| `DATABASE_URL` | Usually automatic | Railway MySQL connection URL. The app also supports `MYSQLHOST`, `MYSQLPORT`, `MYSQLDATABASE`, `MYSQLUSER`, and `MYSQLPASSWORD`. |
+| `TELEGRAM_SET_WEBHOOK` | Optional | Set to `true` to register `https://<domain>/index.php` automatically on startup. |
+| `MIRZABOT_INIT_DB` | Optional | Defaults to `true`; runs `table.php` at startup to create/update tables. |
+
+4. Generate or attach a public Railway domain for the service.
+5. If you did not set `TELEGRAM_SET_WEBHOOK=true`, configure the webhook manually:
+
+```bash
+curl -F "url=https://YOUR_DOMAIN/index.php" "https://api.telegram.org/botYOUR_BOT_TOKEN/setWebhook"
+```
+
+The container listens on Railway's `PORT`, enables Apache rewrite rules, installs the required PHP 8.2 extensions, and initializes the database tables automatically during startup.
+
+If webhook registration returns HTTP 400, first check that `DOMAIN_HOSTS` does not include an internal/container port such as `:8080`, and verify that the Telegram bot token in `API_KEY` is valid. The container logs the Telegram response but continues starting Apache so the service does not crash-loop only because webhook registration failed.
+
+
+### Local Docker Compose test
+
+For local testing before Railway deployment, copy the example environment file and start the app with MySQL:
+
+```bash
+cp .env.example .env
+docker compose up --build
+```
+
+Then open the web service at:
+
+```text
+http://localhost:8080
+```
+
+The compose stack starts two services:
+
+- `app`: builds this repository's `Dockerfile` and runs Apache/PHP.
+- `mysql`: runs MySQL 8 with a persistent `mysql_data` volume.
+
+By default, `TELEGRAM_SET_WEBHOOK=false` in local compose so test runs do not call Telegram. If you want to test real webhook registration, set a public HTTPS domain in `DOMAIN_HOSTS` and change `TELEGRAM_SET_WEBHOOK=true` in `.env`.

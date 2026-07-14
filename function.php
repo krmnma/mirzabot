@@ -428,6 +428,8 @@ function select($table, $field, $whereField = null, $whereValue = null, $type = 
 {
     global $pdo;
 
+    $result = null;
+
     assertSqlIdentifier($table);
     assertSqlIdentifier($field, true);
     assertSqlIdentifier($whereField);
