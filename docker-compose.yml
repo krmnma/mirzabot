@@ -1,0 +1,40 @@
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "8080:80"
+    environment:
+      PORT: 80
+      DATABASE_URL: mysql://mirzabot:mirzabot_password@mysql:3306/mirzabot
+      API_KEY: ${API_KEY:-test_bot_token}
+      ADMIN_NUMBER: ${ADMIN_NUMBER:-123456789}
+      USERNAME_BOT: ${USERNAME_BOT:-mirzabot_test_bot}
+      DOMAIN_HOSTS: ${DOMAIN_HOSTS:-localhost:8080}
+      TELEGRAM_SET_WEBHOOK: ${TELEGRAM_SET_WEBHOOK:-false}
+      MIRZABOT_INIT_DB: ${MIRZABOT_INIT_DB:-true}
+    depends_on:
+      mysql:
+        condition: service_healthy
+    restart: unless-stopped
+
+  mysql:
+    image: mysql:8.0
+    environment:
+      MYSQL_DATABASE: mirzabot
+      MYSQL_USER: mirzabot
+      MYSQL_PASSWORD: mirzabot_password
+      MYSQL_ROOT_PASSWORD: root_password
+    command: --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
+    volumes:
+      - mysql_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD-SHELL", "mysqladmin ping -h 127.0.0.1 -uroot -p$${MYSQL_ROOT_PASSWORD} --silent"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+    restart: unless-stopped
+
+volumes:
+  mysql_data:
